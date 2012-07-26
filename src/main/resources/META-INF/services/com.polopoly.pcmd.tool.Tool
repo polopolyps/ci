@@ -1,0 +1,17 @@
+com.polopoly.ps.ci.tool.CreateDumpTool
+com.polopoly.ps.ci.tool.ImportProjectContentTool
+com.polopoly.ps.ci.tool.IndexserverTool
+com.polopoly.ps.ci.tool.JbossTool
+com.polopoly.ps.ci.tool.JettyTool
+com.polopoly.ps.ci.tool.FrontTool
+com.polopoly.ps.ci.tool.TomcatTool
+com.polopoly.ps.ci.tool.PolopolyTool
+com.polopoly.ps.ci.tool.ReinstallTool
+com.polopoly.ps.ci.tool.RestoreDumpTool
+com.polopoly.ps.ci.tool.SolrTool
+com.polopoly.ps.ci.tool.UpdateClientLibTool
+com.polopoly.ps.ci.tool.DownloadPolopolyDistributionTool
+com.polopoly.ps.ci.tool.DownloadJbossDistributionTool
+com.polopoly.ps.ci.tool.BuildTool
+com.polopoly.ps.ci.tool.ReindexSolrTool
+com.polopoly.ps.ci.tool.DeployTool
