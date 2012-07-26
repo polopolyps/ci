@@ -7,6 +7,7 @@ import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import com.polopoly.ps.ci.configuration.AbstractConfiguration.ConfigurationStringValue;
 import com.polopoly.ps.ci.configuration.Configuration;
 import com.polopoly.ps.ci.exception.CIException;
 import com.polopoly.ps.ci.exception.UrlMonitorFailedException;
@@ -20,11 +21,11 @@ public abstract class AbstractWebserverController extends ProcessUtil {
 
 	public AbstractWebserverController() {
 	}
-	
+
 	public AbstractWebserverController(Host host) {
 		this.host = host;
 	}
-	
+
 	public void start() throws CIException {
 		Configuration configuration = new Configuration();
 
@@ -39,7 +40,9 @@ public abstract class AbstractWebserverController extends ProcessUtil {
 
 	public void verifyServerResponding(Executor executor) {
 		try {
-			waitFor("/", executor);
+			for (ConfigurationStringValue url : new Configuration().getProjectUrls().getValue()) {
+				waitFor(url.getValue(), executor);
+			}
 		} catch (MalformedURLException e) {
 			throw new CIException(e);
 		}
@@ -49,11 +52,13 @@ public abstract class AbstractWebserverController extends ProcessUtil {
 
 	protected void waitFor(String uri, final Executor executor) throws MalformedURLException, CIException {
 		UrlMonitor monitor = new UrlMonitor(new URL("http://" +
-				/* Problems connecting to localhost for some funny reason on Wegener so use 127.0.0.1 */
-				(host.isLocalHost() ? "127.0.0.1" : host) +
-				":" + getPort() + uri));
+		/*
+		 * Problems connecting to localhost for some funny reason on Wegener so
+		 * use 127.0.0.1
+		 */
+		(host.isLocalHost() ? "127.0.0.1" : host) + ":" + getPort() + uri));
 
-		if (executor != null) { 
+		if (executor != null) {
 			monitor.setWhatToDoInBreaks(new Runnable() {
 				@Override
 				public void run() {
@@ -74,27 +79,31 @@ public abstract class AbstractWebserverController extends ProcessUtil {
 	public boolean isRunning() {
 		for (ProcessInfo process : getProcessList(host)) {
 			if (isWebserverProcess(process)) {
-				UrlMonitor monitor;
-				try {
-					monitor = new UrlMonitor(new URL("http://" +
-							/* Problems connecting to localhost for some funny reason on Wegener so use 127.0.0.1 */
-							(host.isLocalHost() ? "127.0.0.1" : host) +
-							":" + getPort() + "/"));
-				} catch (MalformedURLException e) {
-					throw new RuntimeException(e);
+				for (ConfigurationStringValue url : new Configuration().getProjectUrls().getValue()) {
+					UrlMonitor monitor;
+					try {
+						monitor = new UrlMonitor(new URL("http://" +
+						/*
+						 * Problems connecting to localhost for some funny
+						 * reason on Wegener so use 127.0.0.1
+						 */
+						(host.isLocalHost() ? "127.0.0.1" : host) + ":" + getPort() + url.getValue()));
+					} catch (MalformedURLException e) {
+						throw new RuntimeException(e);
+					}
+
+					monitor.setTimeoutMs(10000);
+
+					try {
+						monitor.waitForUrl();
+					} catch (UrlMonitorFailedException e) {
+						System.out.println("Process was running but the server did not respond: " + e.getMessage());
+
+						return false;
+					}
+
+					return true;
 				}
-
-				monitor.setTimeoutMs(10000);
-
-				try {
-					monitor.waitForUrl();
-				} catch (UrlMonitorFailedException e) {
-					System.out.println("Process was running but the server did not respond: " + e.getMessage());
-
-					return false;
-				}
-
-				return true;
 			}
 		}
 
@@ -106,7 +115,7 @@ public abstract class AbstractWebserverController extends ProcessUtil {
 			// can't check it on remote host.
 			return false;
 		}
-		
+
 		return !isPortAvailable(getPort());
 	}
 
@@ -125,9 +134,9 @@ public abstract class AbstractWebserverController extends ProcessUtil {
 	private void printOutput(Executor executor) throws CIException {
 		try {
 			if (logFile == null) {
-	            logFile = new RandomAccessFile(getLog(), "r");
+				logFile = new RandomAccessFile(getLog(), "r");
 
-	            try {
+				try {
 					logFile.seek(logFile.length());
 				} catch (IOException e) {
 					// ignore.
@@ -136,16 +145,16 @@ public abstract class AbstractWebserverController extends ProcessUtil {
 
 			try {
 				String line;
-				
-                while ((line = logFile.readLine()) != null) {
-                    int lineCount = 0;
 
-                    if (++lineCount == MAX_LINES) {
-                        System.out
-                                .println("This is your CI script: There is a lot of activity in the log file. Skipping a few lines...");
-                    } else if (lineCount < MAX_LINES) {
-                        System.out.println(line);
-                    }
+				while ((line = logFile.readLine()) != null) {
+					int lineCount = 0;
+
+					if (++lineCount == MAX_LINES) {
+						System.out
+								.println("This is your CI script: There is a lot of activity in the log file. Skipping a few lines...");
+					} else if (lineCount < MAX_LINES) {
+						System.out.println(line);
+					}
 				}
 			} catch (IOException e) {
 				// done.

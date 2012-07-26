@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.DatagramSocket;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.URL;
@@ -36,6 +37,10 @@ public class ProcessUtil {
 	}
 
 	public boolean isPolopolyRunning() throws CIException {
+		if (!isConnectionPropertiesAvailable()) {
+			return false;
+		}
+
 		if (new Configuration().isRunInNitro()) {
 			return isJbossRunning();
 		}
@@ -203,26 +208,24 @@ public class ProcessUtil {
 				reallyStartIndexServer();
 
 				monitor.monitor();
-				
+
 				if (!isIndexServerRunning()) {
 					throw new CIException("Index server was not running after starting it.");
 				}
-			}
-			else {
+			} else {
 				reallyStartIndexServer();
 
 				int timeElapsed = 0;
-				
+
 				do {
 					if (timeElapsed > 30000) {
 						throw new CIException("Failed to start withing 30s");
 					}
 
 					Thread.sleep(2000);
-					
+
 					timeElapsed += 2000;
-				}
-				while (!isIndexServerRunning());
+				} while (!isIndexServerRunning());
 			}
 		} catch (CIException e) {
 			throw new CIException("While starting indexserver: " + e.getMessage(), e);
@@ -232,7 +235,8 @@ public class ProcessUtil {
 
 	protected void reallyStartIndexServer() {
 		new Executor(new PolopolyDirectories().getPolopolyDirectory().getAbsolutePath()
-				+ "/bin/polopoly start-java -Dmodule.name=indexserver").setHost(new Configuration().getIndexServerHost().getValue()).execute();
+				+ "/bin/polopoly start-java -Dmodule.name=indexserver").setHost(
+				new Configuration().getIndexServerHost().getValue()).execute();
 	}
 
 	public void stopIndexServer() throws CIException, RunningInMavenException {
@@ -567,6 +571,60 @@ public class ProcessUtil {
 							+ " is avaialble. This should not happen!");
 				}
 			}
+		}
+
+		return false;
+	}
+
+	public boolean isConnectionPropertiesAvailable() {
+		String serverName = configuration.getJbossHost().getValue().toString();
+
+		// from 10.3 using mvn p:run
+		String mavenJbossUrl = "http://" + serverName + ":8081/connection-properties/connection.properties";
+
+		if (testConnection(mavenJbossUrl)) {
+			if (configuration.isRunInNitro()) {
+				System.err.println("Connection.properties is available on " + mavenJbossUrl
+						+ " even though polopoly.maven was false in the configuration.");
+			}
+
+			return true;
+		}
+
+		// before 10.3 or not started using mvn p:run
+		String j2eeContainerUrl = "http://" + serverName + ":8040/connection.properties";
+
+		if (testConnection(j2eeContainerUrl)) {
+			if (!configuration.isRunInNitro()) {
+				System.err.println("Connection.properties is available on " + mavenJbossUrl
+						+ " even though polopoly.maven was false in the configuration.");
+			}
+
+			return true;
+		}
+
+		System.out.println(String.format("Could not get connection properties, both %s and %s are invalid.",
+				j2eeContainerUrl, mavenJbossUrl));
+
+		return false;
+	}
+
+	private boolean testConnection(String url) {
+		try {
+			HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+			connection.setConnectTimeout(1000);
+			connection.setReadTimeout(1000);
+			connection.connect();
+
+			if (connection.getResponseCode() >= 400 && connection.getResponseCode() < 600) {
+				return false;
+			}
+
+			return true;
+		} catch (MalformedURLException e) {
+			System.err.println("URL " + url + " is invalid: " + e.getMessage());
+		} catch (IOException e) {
+			// fine. not available.
 		}
 
 		return false;

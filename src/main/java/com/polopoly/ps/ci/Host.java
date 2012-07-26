@@ -7,16 +7,18 @@ public class Host {
 	public Host() {
 		this(LOCALHOST);
 	}
-	
+
 	public Host(String name) {
 		this.name = name;
 	}
-	
+
 	public String toString() {
 		return name;
 	}
-	
+
 	public boolean isLocalHost() {
+		// TODO: understand if a configured host name is actually the current
+		// host.
 		return name.equals(LOCALHOST);
 	}
 
