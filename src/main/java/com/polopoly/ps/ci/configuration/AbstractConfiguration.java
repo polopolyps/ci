@@ -374,7 +374,7 @@ public class AbstractConfiguration {
 		public List<T> getValue() {
 			List<T> result = new ArrayList<T>();
 
-			int i = 0;
+			int i = 1;
 
 			try {
 				do {

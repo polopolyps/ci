@@ -17,6 +17,9 @@ public abstract class AbstractWebserverController extends ProcessUtil {
 	private RandomAccessFile logFile;
 	protected Host host = new Host();
 
+	private int urlTimeoutSeconds = new Configuration().getGuiServerStartupTimeoutSeconds().getValue();
+	private int singleRequestTimeoutSeconds = urlTimeoutSeconds;
+
 	protected abstract boolean isWebserverProcess(ProcessInfo process);
 
 	public AbstractWebserverController() {
@@ -71,8 +74,8 @@ public abstract class AbstractWebserverController extends ProcessUtil {
 			});
 		}
 
-		int urlTimeoutSeconds = new Configuration().getGuiServerStartupTimeoutSeconds().getValue();
 		monitor.setTimeoutMs(urlTimeoutSeconds * 1000);
+		monitor.setSingleRequestTimeoutMs(singleRequestTimeoutSeconds * 1000);
 		monitor.waitForUrl();
 	}
 
@@ -92,7 +95,8 @@ public abstract class AbstractWebserverController extends ProcessUtil {
 						throw new RuntimeException(e);
 					}
 
-					monitor.setTimeoutMs(10000);
+					monitor.setTimeoutMs(3000);
+					monitor.setSingleRequestTimeoutMs(30000);
 
 					try {
 						monitor.waitForUrl();
@@ -101,9 +105,9 @@ public abstract class AbstractWebserverController extends ProcessUtil {
 
 						return false;
 					}
-
-					return true;
 				}
+
+				return true;
 			}
 		}
 
@@ -181,4 +185,24 @@ public abstract class AbstractWebserverController extends ProcessUtil {
 		// check if jetty terminated immediately.
 		executor.checkExitValue();
 	}
+
+	public void setSingleRequestTimeoutSeconds(int singleRequestTimeoutSeconds) {
+		this.singleRequestTimeoutSeconds = singleRequestTimeoutSeconds;
+	}
+
+	public void setUrlTimeoutSeconds(int urlTimeoutSeconds) {
+		this.urlTimeoutSeconds = urlTimeoutSeconds;
+
+		// if the request hangs we don't want to time out since we then trigger
+		// a
+		// new request which can overload the server so better to wait. if,
+		// however,
+		// we immediately get an exception, we want to retry.
+		singleRequestTimeoutSeconds = urlTimeoutSeconds;
+	}
+
+	public Host getHost() {
+		return host;
+	}
+
 }

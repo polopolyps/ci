@@ -153,7 +153,7 @@ public class Configuration extends AbstractConfiguration {
 
 	/**
 	 * A list of URLs that are guaranteed to exist in the project; for use when
-	 * sanity checking tomcat. URLs don«t include the hostname and should be
+	 * sanity checking tomcat. URLs dont include the hostname and should be
 	 * valid both in preview and front.
 	 */
 	public ConfigurationListValue<ConfigurationStringValue> getProjectUrls() {

@@ -11,82 +11,88 @@ import org.apache.commons.httpclient.methods.GetMethod;
 
 import com.polopoly.ps.ci.exception.CIException;
 import com.polopoly.ps.ci.exception.UrlMonitorFailedException;
-import com.polopoly.ps.hotdeploy.util.Plural;
+import com.polopoly.ps.pcmd.util.Plural;
 
 public class UrlMonitor {
-    private URL url;
-    private long timeoutMs = 5000;
-    private Runnable whatToDoInBreaks;
+	private URL url;
+	private long timeoutMs = 5000;
+	private Runnable whatToDoInBreaks;
+	private long singleRequestTimeoutMs;
 
-    UrlMonitor(URL url) {
-        this.url = Require.require(url);
-    }
+	UrlMonitor(URL url) {
+		this.url = Require.require(url);
+	}
 
-    public void setTimeoutMs(long timeoutMs) {
-        this.timeoutMs = timeoutMs;
-    }
+	public void waitForUrl() throws CIException {
+		int counter = 0;
 
-    public void setWhatToDoInBreaks(Runnable whatToDoInBreaks) {
-        this.whatToDoInBreaks = whatToDoInBreaks;
-    }
+		System.out.println("Waiting for " + url + " to respond...");
 
-    public void waitForUrl() throws CIException {
-        int counter = 0;
+		long startTime = System.currentTimeMillis();
 
-        System.out.println("Waiting for " + url + " to respond...");
+		while (System.currentTimeMillis() - startTime <= timeoutMs) {
+			try {
+				sleep(100);
+			} catch (InterruptedException e) {
+			}
 
-        long startTime = System.currentTimeMillis();
-        
-        while (System.currentTimeMillis() - startTime <= timeoutMs) {
-            try {
-                sleep(100);
-            } catch (InterruptedException e) {
-            }
+			try {
+				if (isURLReady(url)) {
+					System.out.println(url + " responded with status 200 (= ok).");
 
-            try {
-                if (isURLReady(url)) {
-                    System.out.println(url + " responded with status 200 (= ok).");
+					return;
+				} else if (counter % 10 == 0) {
+					int seconds = (int) (System.currentTimeMillis() - startTime) / 1000;
+					System.out.println("Waited " + Plural.count(seconds, "second") + "...");
+				}
+			} finally {
+				if (whatToDoInBreaks != null) {
+					whatToDoInBreaks.run();
+				}
+			}
 
-                    return;
-                } else if (counter % 10 == 0) {
-                    int seconds = (int) (System.currentTimeMillis() - startTime) / 1000;
-                    System.out.println("Waited " + Plural.count(seconds, "second") + "...");
-                }
-            } finally {
-                if (whatToDoInBreaks != null) {
-                    whatToDoInBreaks.run();
-                }
-            }
+			counter++;
+		}
 
-            counter++;
-        }
+		throw new UrlMonitorFailedException("Could not load the URL " + url + " even after trying for "
+				+ (timeoutMs / 1000) + " seconds.");
+	}
 
-        throw new UrlMonitorFailedException("Could not load the URL " + url + " even after trying for " + (timeoutMs / 1000)
-                + " seconds.");
-    }
+	private boolean isURLReady(URL url) throws CIException {
+		HttpClient httpclient = new HttpClient();
 
-    private boolean isURLReady(URL url) throws CIException {
-        HttpClient httpclient = new HttpClient();
+		httpclient.setConnectionTimeout((int) singleRequestTimeoutMs);
+		httpclient.setTimeout((int) singleRequestTimeoutMs);
 
-        httpclient.setConnectionTimeout(1000);
-        httpclient.setTimeout(1000);
-        
-        GetMethod httpget = new GetMethod(url.toString());
-        int status;
+		GetMethod httpget = new GetMethod(url.toString());
+		int status;
 
-        try {
-            status = httpclient.executeMethod(httpget);
-        } catch (HttpException e) {
-            throw new CIException("While calling " + url + ": " + e.getMessage(), e);
-        } catch (IOException e) {
-            return false;
-        }
+		try {
+			status = httpclient.executeMethod(httpget);
+		} catch (HttpException e) {
+			throw new CIException("While calling " + url + ": " + e.getMessage(), e);
+		} catch (IOException e) {
+			return false;
+		}
 
-        if (status == 200) {
-            return true;
-        } else {
-            throw new CIException("The URL " + url + " returned status code " + status + ".");
-        }
-    }
+		if (status == 200) {
+			return true;
+		} else {
+			throw new CIException("The URL " + url + " returned status code " + status + ".");
+		}
+	}
+
+	public void setTimeoutMs(long timeoutMs) {
+		this.timeoutMs = timeoutMs;
+		singleRequestTimeoutMs = timeoutMs;
+	}
+
+	public void setWhatToDoInBreaks(Runnable whatToDoInBreaks) {
+		this.whatToDoInBreaks = whatToDoInBreaks;
+	}
+
+	public void setSingleRequestTimeoutMs(int singleRequestTimeoutMs) {
+		this.singleRequestTimeoutMs = singleRequestTimeoutMs;
+	}
 
 }
