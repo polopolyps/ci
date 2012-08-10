@@ -134,6 +134,12 @@ public class DeployTool implements Tool<DeployParameters>, DoesNotRequireRunning
 		deploy(new File(deployDirectory, "ROOT.war"), webappsDirectory, new Host());
 		deploy(new File(deployDirectory, "polopoly.war"), webappsDirectory, new Host());
 
+		File moderationWar = new File(deployDirectory, "moderation.war");
+
+		if (moderationWar.exists()) {
+			deploy(moderationWar, webappsDirectory, new Host());
+		}
+
 		// the front.war must be called ROOT.war on the front. this is
 		// unfortunately the easiest way of doing that copy.
 		File frontTmpDir = new File(deployDirectory, "front_tmp");
