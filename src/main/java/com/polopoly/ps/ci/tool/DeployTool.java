@@ -1,6 +1,7 @@
 package com.polopoly.ps.ci.tool;
 
 import java.io.File;
+import java.util.List;
 import java.util.Scanner;
 
 import com.polopoly.pcmd.tool.Tool;
@@ -12,6 +13,7 @@ import com.polopoly.ps.ci.Host;
 import com.polopoly.ps.ci.ProcessUtil;
 import com.polopoly.ps.ci.Require;
 import com.polopoly.ps.ci.TomcatController;
+import com.polopoly.ps.ci.configuration.AbstractConfiguration.ConfigurationHostValue;
 import com.polopoly.ps.ci.configuration.Configuration;
 import com.polopoly.ps.ci.configuration.PolopolyDirectories;
 import com.polopoly.ps.ci.exception.CIException;
@@ -65,7 +67,7 @@ public class DeployTool implements Tool<DeployParameters>, DoesNotRequireRunning
 					"Deployment is not possible when running in Nitro. An external JBoss and web server is needed.");
 		}
 
-		Host frontHost = new Configuration().getFrontHost().getValue();
+		List<ConfigurationHostValue> frontHosts = new Configuration().getFrontHosts().getValue();
 
 		TomcatController controller = new TomcatController();
 
@@ -73,18 +75,27 @@ public class DeployTool implements Tool<DeployParameters>, DoesNotRequireRunning
 
 		warmUpCaches(controller);
 
-		TomcatController frontController = new TomcatController(frontHost);
+		for (ConfigurationHostValue frontHostValue : frontHosts) {
+			Host frontHost = frontHostValue.getValue();
 
-		warmUpCaches(frontController);
+			TomcatController frontController = new TomcatController(frontHost);
+			warmUpCaches(frontController);
+		}
 
 		System.out.println("Shutting down GUI server...");
 
 		new TomcatController().kill();
 
-		if (!frontHost.isLocalHost()) {
-			System.out.println("Shutting down front server...");
+		for (ConfigurationHostValue frontHostValue : frontHosts) {
+			Host frontHost = frontHostValue.getValue();
 
-			frontController.kill();
+			TomcatController frontController = new TomcatController(frontHost);
+
+			if (!frontHost.isLocalHost()) {
+				System.out.println("Shutting down front server...");
+
+				frontController.kill();
+			}
 		}
 
 		System.out.println("Shutting down index server...");
@@ -148,14 +159,24 @@ public class DeployTool implements Tool<DeployParameters>, DoesNotRequireRunning
 		File frontTmpWar = new File(frontTmpDir, "ROOT.war");
 		new Executor("cp " + new File(deployDirectory, "front.war").getAbsolutePath() + " "
 				+ frontTmpWar.getAbsolutePath()).execute();
-		deploy(frontTmpWar, webappsDirectory, frontHost);
+
+		for (ConfigurationHostValue frontHostValue : frontHosts) {
+			Host frontHost = frontHostValue.getValue();
+
+			deploy(frontTmpWar, webappsDirectory, frontHost);
+		}
 
 		new DirectoryUtil().deleteDirectory(frontTmpDir);
 
 		new TomcatController().start();
 
-		if (!frontHost.isLocalHost()) {
-			frontController.start();
+		for (ConfigurationHostValue frontHostValue : frontHosts) {
+			Host frontHost = frontHostValue.getValue();
+
+			if (!frontHost.isLocalHost()) {
+				TomcatController frontController = new TomcatController(frontHost);
+				frontController.start();
+			}
 		}
 
 		System.out.println("Deployment done.");

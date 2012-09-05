@@ -3,6 +3,7 @@ package com.polopoly.ps.ci.configuration;
 import java.io.File;
 
 import com.polopoly.ps.ci.exception.CIException;
+import com.polopoly.ps.ci.exception.NotConfiguredException;
 
 public class Configuration extends AbstractConfiguration {
 
@@ -66,6 +67,14 @@ public class Configuration extends AbstractConfiguration {
 		return host("jboss.host", defaultToString("localhost"));
 	}
 
+	public ConfigurationIntegerValue getJbossJmxPort() {
+		return integer("jboss.jmx.port", defaultToString("9999"));
+	}
+
+	public ConfigurationStringValue getJbossJmxPassword() {
+		return string("jboss.jmx.password", defaultToString("monitorRole"));
+	}
+
 	/**
 	 * Returns the JBoss web port. This is the port SOLR is using if deployed on
 	 * JBoss.
@@ -80,6 +89,18 @@ public class Configuration extends AbstractConfiguration {
 	 */
 	public ConfigurationIntegerValue getGuiServerPort() {
 		return integer("guiserver.port", defaultToString("8090"));
+	}
+
+	public ConfigurationHostValue getGuiServerHost() {
+		return host("guiserver.host", defaultToConfigurationString(getJbossHost()));
+	}
+
+	public ConfigurationIntegerValue getGuiServerJmxPort() {
+		return integer("guiserver.jmx.port", defaultToString("9999"));
+	}
+
+	public ConfigurationStringValue getGuiServerJmxPassword() {
+		return string("guiserver.jmx.password", defaultToString("monitorRole"));
 	}
 
 	/**
@@ -390,6 +411,7 @@ public class Configuration extends AbstractConfiguration {
 			return artifact + version.getValue();
 		}
 
+		@Override
 		public String toString() {
 			return version + " prefixed with the default group and artifact ID.";
 		}
@@ -433,12 +455,39 @@ public class Configuration extends AbstractConfiguration {
 		return string("tomcat.options", defaultToString(""));
 	}
 
-	public ConfigurationHostValue getFrontHost() {
-		return host("front.host");
+	public ConfigurationListValue<ConfigurationHostValue> getFrontHosts() {
+		return new ConfigurationListValue<AbstractConfiguration.ConfigurationHostValue>("front.host") {
+			@Override
+			protected ConfigurationHostValue createValue(String variableName) {
+				return host(variableName);
+			}
+
+			@Override
+			protected ConfigurationHostValue createDefaultValue() {
+				throw new NotConfiguredException(
+						"No fronts were configured (use the property front.host.<n>, <n> being a number starting with 1).");
+			}
+		};
+	}
+
+	public ConfigurationIntegerValue getFrontJmxPort() {
+		return integer("front.jmx.port", defaultToString("9999"));
+	}
+
+	public ConfigurationStringValue getFrontJmxPassword() {
+		return string("front.jmx.password", defaultToString("monitorRole"));
 	}
 
 	public ConfigurationHostValue getIndexServerHost() {
 		return host("indexserver.host", defaultToString("localhost"));
+	}
+
+	public ConfigurationIntegerValue getIndexServerJmxPort() {
+		return integer("indexserver.jmx.port", defaultToString("9999"));
+	}
+
+	public ConfigurationStringValue getIndexServerJmxPassword() {
+		return string("indexserver.jmx.password", defaultToString("monitorRole"));
 	}
 
 	public ConfigurationFileValue getBackupDir() {

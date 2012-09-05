@@ -116,6 +116,7 @@ public class AbstractConfiguration {
 				return string;
 			}
 
+			@Override
 			public String toString() {
 				return string;
 			}
@@ -141,6 +142,7 @@ public class AbstractConfiguration {
 				}
 			}
 
+			@Override
 			public String toString() {
 				return "asking for value";
 			}
@@ -155,6 +157,7 @@ public class AbstractConfiguration {
 				return value.getConfigurationString();
 			}
 
+			@Override
 			public String toString() {
 				return value + " (evaluates to " + compute() + ").";
 			}
@@ -169,6 +172,7 @@ public class AbstractConfiguration {
 				return new File(basePath.getNonExistingFile(), relativePath).getAbsolutePath();
 			}
 
+			@Override
 			public String toString() {
 				return relativePath + " in " + basePath + " (evaluates to " + compute() + ").";
 			}
@@ -229,6 +233,7 @@ public class AbstractConfiguration {
 			return result;
 		}
 
+		@Override
 		public String toString() {
 			return variableName;
 		}
@@ -268,6 +273,7 @@ public class AbstractConfiguration {
 			this.relativeTo = relativeTo;
 		}
 
+		@Override
 		public File getNonExistingFile() {
 			File result = computedFileValue.get(variableName);
 

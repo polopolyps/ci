@@ -82,7 +82,8 @@ public class DumpExporter extends AbstractDumpHandler {
         }
     }
 
-    protected File getWorkDirectory() {
+    @Override
+	protected File getWorkDirectory() {
         return new File(dumpFile.getParentFile(), "tmp");
     }
 

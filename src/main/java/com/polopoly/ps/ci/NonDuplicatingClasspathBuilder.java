@@ -37,7 +37,8 @@ public class NonDuplicatingClasspathBuilder extends ClasspathBuilder {
         }
     }
 
-    protected void addJarFile(File file) {
+    @Override
+	protected void addJarFile(File file) {
         VersionedJar versionedJar;
 
         try {

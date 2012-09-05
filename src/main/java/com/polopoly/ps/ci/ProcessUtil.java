@@ -113,7 +113,7 @@ public class ProcessUtil {
 		return getProcessList(null);
 	}
 
-	protected List<ProcessInfo> getProcessList(Host host) throws CIException {
+	public List<ProcessInfo> getProcessList(Host host) throws CIException {
 		String ps = new Executor("ps -ef").setHost(host).setOutputOnConsole(false).execute();
 
 		List<ProcessInfo> result = new ArrayList<ProcessInfo>();
@@ -121,7 +121,7 @@ public class ProcessUtil {
 		boolean first = true;
 
 		for (String line : ps.split("\n")) {
-			if (first) {
+			if (first || (line.contains("PPID") && line.contains("UID"))) {
 				first = false;
 			} else {
 				result.add(new ProcessInfo(line, host));

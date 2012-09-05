@@ -31,7 +31,7 @@ public class Executor {
 		return this;
 	}
 
-	Executor setOutputOnConsole(boolean outputOnConsole) {
+	public Executor setOutputOnConsole(boolean outputOnConsole) {
 		this.outputOnConsole = outputOnConsole;
 
 		return this;
@@ -166,6 +166,7 @@ public class Executor {
 		return process;
 	}
 
+	@Override
 	public String toString() {
 		return command + (!host.isLocalHost() ? " on host " + host : "")
 				+ (directory.getName().equals(".") ? "" : " in " + directory.getAbsolutePath());

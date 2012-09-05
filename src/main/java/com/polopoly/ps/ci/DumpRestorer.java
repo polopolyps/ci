@@ -152,7 +152,8 @@ public class DumpRestorer extends AbstractDumpHandler {
         System.out.println("Done.");
     }
 
-    protected File getWorkDirectory() {
+    @Override
+	protected File getWorkDirectory() {
         return new File("tmp");
     }
 

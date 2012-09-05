@@ -9,10 +9,12 @@ import com.polopoly.ps.ci.exception.CIException;
 public class JettyController extends AbstractWebserverController {
     private static final String LOG_FILE_NAME = "jetty.log";
 
-    protected boolean isWebserverProcess(ProcessInfo process) {
+    @Override
+	protected boolean isWebserverProcess(ProcessInfo process) {
     	return process.isJettyProcess();
     }
 
+	@Override
 	protected Executor startWebserverProcess() {
 		Executor result = startJetty();
 		
@@ -25,7 +27,8 @@ public class JettyController extends AbstractWebserverController {
 		return result;
 	}
 
-    public File getLog() {
+    @Override
+	public File getLog() {
         return new File(new Configuration().getProjectHomeDirectory().getValue(), LOG_FILE_NAME);
     }
 

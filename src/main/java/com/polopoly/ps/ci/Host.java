@@ -12,6 +12,7 @@ public class Host {
 		this.name = name;
 	}
 
+	@Override
 	public String toString() {
 		return name;
 	}
@@ -22,6 +23,7 @@ public class Host {
 		return name.equals(LOCALHOST);
 	}
 
+	@Override
 	public boolean equals(Object o) {
 		return o instanceof Host && ((Host) o).name.equals(name);
 	}

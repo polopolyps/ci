@@ -6,66 +6,79 @@ import com.polopoly.ps.ci.exception.CIException;
 import com.polopoly.ps.ci.exception.NoSuchFileInRepo;
 
 public class DependencyResolver {
-    /**
-     * @param artifact
-     *            <group>:<artifact>:<version>
-     */
-    public File resolve(String artifact) {
-        try {
-            return getLocalRepoFile(artifact);
-        } catch (NoSuchFileInRepo e) {
-            new Executor("mvn org.apache.maven.plugins:maven-dependency-plugin:2.3:get "
-                    + "-DrepoUrl=http://maven.polopoly.com/nexus/content/repositories/professional-services "
-                    + "-DrepoId=polopoly-ps -Dartifact=" + artifact).execute();
+	/**
+	 * @param artifact
+	 *            <group>:<artifact>:<version>
+	 */
+	public File resolve(String artifact) {
+		try {
+			return getLocalRepoFile(artifact);
+		} catch (NoSuchFileInRepo e) {
+			new Executor("mvn org.apache.maven.plugins:maven-dependency-plugin:2.3:get "
+					+ "-DrepoUrl=http://maven.polopoly.com/nexus/content/repositories/professional-services "
+					+ "-DrepoId=polopoly-ps -Dartifact=" + artifact).execute();
 
-            try {
-                return getLocalRepoFile(artifact);
-            } catch (NoSuchFileInRepo e1) {
-                throw new CIException("Failed loading the artifact " + artifact
-                        + ". Even after calling the Maven dependency plugin it wasn't in the repository: " + e.getMessage());
-            }
-        }
+			try {
+				return getLocalRepoFile(artifact);
+			} catch (NoSuchFileInRepo e1) {
+				throw new CIException("Failed loading the artifact " + artifact
+						+ ". Even after calling the Maven dependency plugin it wasn't in the repository: "
+						+ e.getMessage());
+			}
+		}
 
-    }
+	}
 
-    private File getLocalRepoFile(String artifact) throws NoSuchFileInRepo {
-        File result = new File(getRepoRoot(), getGroupId(artifact).replace('.', '/') + "/"
-                + stripGroupId(artifact).replace(':', '/') + "/" + stripGroupId(artifact).replace(':', '-') + ".jar");
+	private File getLocalRepoFile(String artifact) throws NoSuchFileInRepo {
+		String fileName = stripGroupId(artifact).replace(':', '-') + ".jar";
+		String directory = getGroupId(artifact).replace('.', '/') + "/" + stripGroupId(artifact).replace(':', '/');
 
-        if (!result.exists()) {
-            throw new NoSuchFileInRepo("The file " + result + " (artifact " + artifact + ") did not exist in local repo.");
-        }
+		File result = new File(getRepoRoot(), directory + "/" + fileName);
 
-        return result;
-    }
+		if (!result.exists()) {
+			File currentDirectoryFile = new File(".", fileName);
 
-    private String stripGroupId(String artifact) {
-        int i = artifact.indexOf(':');
+			// useful fallback for systems without Maven.
+			if (currentDirectoryFile.exists()) {
+				return currentDirectoryFile;
+			}
 
-        if (i == -1) {
-            throw new CIException("Expected the artifact " + artifact + " to be of the form <group>:<artifact>:<version>");
-        }
+			throw new NoSuchFileInRepo("The file " + result + " (artifact " + artifact
+					+ ") did not exist in local repo or current directory.");
+		}
 
-        return artifact.substring(i + 1);
-    }
+		return result;
+	}
 
-    private String getGroupId(String artifact) {
-        int i = artifact.indexOf(':');
+	private String stripGroupId(String artifact) {
+		int i = artifact.indexOf(':');
 
-        if (i == -1) {
-            throw new CIException("Expected the artifact " + artifact + " to be of the form <group>:<artifact>:<version>");
-        }
+		if (i == -1) {
+			throw new CIException("Expected the artifact " + artifact
+					+ " to be of the form <group>:<artifact>:<version>");
+		}
 
-        return artifact.substring(0, i);
-    }
+		return artifact.substring(i + 1);
+	}
 
-    private File getRepoRoot() {
-        String userHome = System.getProperty("user.home");
+	private String getGroupId(String artifact) {
+		int i = artifact.indexOf(':');
 
-        if (userHome == null) {
-            throw new CIException("Could not get user home.");
-        }
+		if (i == -1) {
+			throw new CIException("Expected the artifact " + artifact
+					+ " to be of the form <group>:<artifact>:<version>");
+		}
 
-        return new File(new File(userHome), ".m2/repository");
-    }
+		return artifact.substring(0, i);
+	}
+
+	private File getRepoRoot() {
+		String userHome = System.getProperty("user.home");
+
+		if (userHome == null) {
+			throw new CIException("Could not get user home.");
+		}
+
+		return new File(new File(userHome), ".m2/repository");
+	}
 }

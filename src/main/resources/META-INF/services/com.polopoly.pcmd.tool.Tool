@@ -15,3 +15,4 @@ com.polopoly.ps.ci.tool.DownloadJbossDistributionTool
 com.polopoly.ps.ci.tool.BuildTool
 com.polopoly.ps.ci.tool.ReindexSolrTool
 com.polopoly.ps.ci.tool.DeployTool
+com.polopoly.ps.ci.tool.MonitorTool
