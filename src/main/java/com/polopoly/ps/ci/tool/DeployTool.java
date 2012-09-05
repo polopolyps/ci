@@ -196,7 +196,7 @@ public class DeployTool implements Tool<DeployParameters>, DoesNotRequireRunning
 			controller.verifyServerResponding(null);
 		} catch (CIException e) {
 			System.out.println(e.getMessage() + " Web server at " + controller.getHost()
-					+ " doesn«t seem to be running. Proceeding anyway...");
+					+ " doesn't seem to be running. Proceeding anyway...");
 		}
 	}
 
