@@ -7,23 +7,6 @@
   <version>2.0</version>
   <name>CI scripts</name>
 
-  <distributionManagement>
-    <repository>
-      <uniqueVersion>false</uniqueVersion>
-      <id>professional-services</id>
-      <name>Professional Services</name>
-      <url>http://maven.polopoly.com/nexus/content/repositories/professional-services</url>
-      <layout>default</layout>
-    </repository>
-    <snapshotRepository>
-      <uniqueVersion>false</uniqueVersion>
-      <id>professional-services-snapshots</id>
-      <name>Professional Services Snapshots</name>
-      <url>http://maven.polopoly.com/nexus/content/repositories/professional-services-snapshots</url>
-      <layout>default</layout>
-    </snapshotRepository>
-  </distributionManagement>
-
   <build>
     <plugins>
       <plugin>
@@ -133,6 +116,14 @@
       <id>professional-services</id>
       <name>Professional Services</name>
       <url>http://maven.polopoly.com/nexus/content/repositories/professional-services</url>
+      <layout>default</layout>
     </repository>
+    <snapshotRepository>
+      <uniqueVersion>false</uniqueVersion>
+      <id>professional-services-snapshots</id>
+      <name>Professional Services Snapshots</name>
+      <url>http://maven.polopoly.com/nexus/content/repositories/professional-services-snapshots</url>
+      <layout>default</layout>
+    </snapshotRepository>
   </distributionManagement>
 </project> 
